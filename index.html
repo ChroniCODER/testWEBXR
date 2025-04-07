@@ -11,10 +11,10 @@
 </head>
 <body>
   <script type="module">
-    import * as THREE from './assets/three.module.js';
-    import { GLTFLoader } from './assets/GLTFLoader.js';
-    import { VRButton } from './assets/VRButton.js';
-    import { XRControllerModelFactory } from './assets/XRControllerModelFactory.js';
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js';
+    import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/webxr/VRButton.js';
+    import { XRControllerModelFactory } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/webxr/XRControllerModelFactory.js';
 
     let scene, camera, renderer;
     let controller1, controller2;
@@ -24,67 +24,67 @@
     animate();
 
     function init() {
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xa0d8f0);
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xa0d8f0);
 
-      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
-      camera.position.set(0, 1.6, 3);
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
+        camera.position.set(0, 1.6, 3);
 
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      document.body.appendChild(renderer.domElement);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
 
-      document.body.appendChild(VRButton.createButton(renderer));
+        document.body.appendChild(VRButton.createButton(renderer));
 
-      const light = new THREE.HemisphereLight(0xffffff, 0x444444);
-      light.position.set(0, 20, 0);
-      scene.add(light);
+        const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+        light.position.set(0, 20, 0);
+        scene.add(light);
 
-      const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(100, 100),
-        new THREE.MeshStandardMaterial({ color: 0x66bb66 })
-      );
-      ground.rotation.x = -Math.PI / 2;
-      ground.receiveShadow = true;
-      scene.add(ground);
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(100, 100),
+            new THREE.MeshStandardMaterial({ color: 0x66bb66 })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
 
-      const cube = new THREE.Mesh(
-        new THREE.BoxGeometry(0.3, 0.3, 0.3),
-        new THREE.MeshStandardMaterial({ color: 0xff4444 })
-      );
-      cube.position.set(0, 1.5, -1);
-      scene.add(cube);
+        const cube = new THREE.Mesh(
+            new THREE.BoxGeometry(0.3, 0.3, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0xff4444 })
+        );
+        cube.position.set(0, 1.5, -1);
+        scene.add(cube);
 
-      controller1 = renderer.xr.getController(0);
-      controller2 = renderer.xr.getController(1);
-      scene.add(controller1);
-      scene.add(controller2);
+        controller1 = renderer.xr.getController(0);
+        controller2 = renderer.xr.getController(1);
+        scene.add(controller1);
+        scene.add(controller2);
 
-      const controllerModelFactory = new XRControllerModelFactory();
+        const controllerModelFactory = new XRControllerModelFactory();
 
-      controllerGrip1 = renderer.xr.getControllerGrip(0);
-      controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
-      scene.add(controllerGrip1);
+        controllerGrip1 = renderer.xr.getControllerGrip(0);
+        controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
+        scene.add(controllerGrip1);
 
-      controllerGrip2 = renderer.xr.getControllerGrip(1);
-      controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
-      scene.add(controllerGrip2);
+        controllerGrip2 = renderer.xr.getControllerGrip(1);
+        controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
+        scene.add(controllerGrip2);
 
-      window.addEventListener('resize', onWindowResize);
+        window.addEventListener('resize', onWindowResize);
     }
 
     function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     function animate() {
-      renderer.setAnimationLoop(() => {
-        renderer.render(scene, camera);
-      });
+        renderer.setAnimationLoop(() => {
+            renderer.render(scene, camera);
+        });
     }
-  </script>
+</script>
 </body>
 </html>
