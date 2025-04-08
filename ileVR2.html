@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Île VR Immersive</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script>
+    // Charger THREE.js directement à partir d'un CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js';
+    script.onload = () => {
+      init(); // Initialisation une fois que THREE est chargé
+    };
+    document.head.appendChild(script);
+
+    function init() {
+      // Initialisation de la scène
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x87ceeb); // Ciel bleu
+
+      // Caméra et vue
+      const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 1.6, 2);
+
+      // Rendu
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.xr.enabled = true;
+      document.body.appendChild(renderer.domElement);
+
+      // Ajouter un bouton VR
+      const vrButton = document.createElement('button');
+      vrButton.innerHTML = "Enter VR";
+      vrButton.style.position = 'absolute';
+      vrButton.style.top = '20px';
+      vrButton.style.left = '20px';
+      vrButton.onclick = () => {
+        const session = renderer.xr.getSession();
+        if (session) {
+          renderer.xr.enabled = true;
+          renderer.xr.getSession().requestReferenceSpace('local').then(() => {
+            renderer.xr.getSession().updateRenderState({ baseLayer: new XRWebGLLayer(renderer.xr.getSession(), renderer.getContext()) });
+          });
+        }
+      };
+      document.body.appendChild(vrButton);
+
+      // Lumière de la scène
+      const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+      scene.add(light);
+
+      // Île (Sol)
+      const ground = new THREE.Mesh(
+        new THREE.CircleGeometry(20, 64),
+        new THREE.MeshStandardMaterial({ color: 0xffe57f })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // Mer (Autour de l'île)
+      const water = new THREE.Mesh(
+        new THREE.CircleGeometry(100, 64),
+        new THREE.MeshBasicMaterial({ color: 0x3399ff, transparent: true, opacity: 0.7 })
+      );
+      water.rotation.x = -Math.PI / 2;
+      water.position.y = -0.01;
+      scene.add(water);
+
+      // Palmiers
+      for (let i = 0; i < 5; i++) {
+        const trunk = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.1, 0.1, 2, 6),
+          new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+        );
+        trunk.position.set(Math.random() * 15 - 7.5, 1, Math.random() * 15 - 7.5);
+        scene.add(trunk);
+
+        for (let j = 0; j < 5; j++) {
+          const leaf = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 1, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0x228b22 })
+          );
+          leaf.position.set(
+            trunk.position.x + Math.random() * 0.5 - 0.25,
+            trunk.position.y + 1,
+            trunk.position.z + Math.random() * 0.5 - 0.25
+          );
+          leaf.rotation.x = Math.random();
+          leaf.rotation.z = Math.random();
+          scene.add(leaf);
+        }
+      }
+
+      // Cabane (simple)
+      const cabin = new THREE.Group();
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 1, 2),
+        new THREE.MeshStandardMaterial({ color: 0xcd853f })
+      );
+      const roof = new THREE.Mesh(
+        new THREE.ConeGeometry(1.5, 1, 4),
+        new THREE.MeshStandardMaterial({ color: 0x8b0000 })
+      );
+      roof.position.y = 1;
+      cabin.add(base);
+      cabin.add(roof);
+      cabin.position.set(-3, 0.5, -3);
+      scene.add(cabin);
+
+      // Mouvements du joueur
+      let velocity = new THREE.Vector3();
+      let direction = new THREE.Vector3();
+      let moveSpeed = 0.05;
+
+      const controls = new THREE.PointerLockControls(camera, renderer.domElement);
+      document.body.addEventListener('click', () => {
+        controls.lock();
+      });
+
+      // Détecter la manette VR
+      window.addEventListener('resize', onWindowResize);
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      // Animer la scène
+      function animate() {
+        controls.update();
+        renderer.render(scene, camera);
+        renderer.setAnimationLoop(animate);
+      }
+      animate();
+    }
+  </script>
+</body>
+</html>
