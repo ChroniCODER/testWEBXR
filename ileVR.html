@@ -1,112 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Île VR Immersive - Lite</title>
-  <style>
-    body { margin: 0; overflow: hidden; background: #87ceeb; }
-    canvas { display: block; }
-  </style>
-</head>
-<body>
-<script type="module">
-  import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
-  import { VRButton } from 'https://unpkg.com/three@0.158.0/examples/jsm/webxr/VRButton.js';
-  import { XRControllerModelFactory } from 'https://unpkg.com/three@0.158.0/examples/jsm/webxr/XRControllerModelFactory.js';
+  <head>
+    <meta charset="UTF-8" />
+    <title>Île VR autonome</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body { margin: 0; overflow: hidden; background: #000; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      // --- version inline de Three.js allégée ---
+      import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js';
+      import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/webxr/VRButton.js';
 
-  let scene, camera, renderer;
-  let controller, controllerGrip;
-  let direction = new THREE.Vector3();
-  let velocity = new THREE.Vector3();
+      let camera, scene, renderer;
+      let controller1, controller2;
+      let island, ocean;
 
-  init();
-  animate();
+      init();
+      animate();
 
-  function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87ceeb);
+      function init() {
+        // Scene
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb); // ciel
 
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
-    camera.position.set(0, 1.6, 3);
+        // Camera
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.6, 3);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.xr.enabled = true;
-    document.body.appendChild(renderer.domElement);
-    document.body.appendChild(VRButton.createButton(renderer));
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(VRButton.createButton(renderer));
 
-    const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
-    scene.add(light);
+        // Lumière
+        const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+        light.position.set(0, 200, 0);
+        scene.add(light);
 
-    const ground = new THREE.Mesh(
-      new THREE.CylinderGeometry(10, 10, 1, 64),
-      new THREE.MeshStandardMaterial({ color: 0xffe066, flatShading: true })
-    );
-    ground.position.y = -0.5;
-    scene.add(ground);
+        // Sol / île
+        const islandGeometry = new THREE.CircleGeometry(10, 32);
+        const islandMaterial = new THREE.MeshStandardMaterial({ color: 0xf9d76e, flatShading: true });
+        island = new THREE.Mesh(islandGeometry, islandMaterial);
+        island.rotation.x = -Math.PI / 2;
+        island.receiveShadow = true;
+        scene.add(island);
 
-    const water = new THREE.Mesh(
-      new THREE.CylinderGeometry(100, 100, 1, 64),
-      new THREE.MeshStandardMaterial({ color: 0x3399ff, transparent: true, opacity: 0.8 })
-    );
-    water.position.y = -1;
-    scene.add(water);
+        // Océan (autour de l'île)
+        const oceanGeometry = new THREE.CircleGeometry(100, 64);
+        const oceanMaterial = new THREE.MeshBasicMaterial({ color: 0x1e90ff });
+        ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+        ocean.rotation.x = -Math.PI / 2;
+        ocean.position.y = -0.01;
+        scene.add(ocean);
 
-    const palmMaterial = new THREE.MeshStandardMaterial({ color: 0x228b22, flatShading: true });
-    const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513, flatShading: true });
-    for (let i = 0; i < 3; i++) {
-      const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.1, 0.2, 1.5, 6),
-        trunkMaterial
-      );
-      trunk.position.set(Math.cos(i) * 2, 0.75, Math.sin(i) * 2);
-      scene.add(trunk);
+        // Quelques palmiers stylisés (cônes + cylindres)
+        for (let i = 0; i < 5; i++) {
+          const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.05, 0.05, 1, 6),
+            new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+          );
+          trunk.position.set(
+            Math.random() * 8 - 4,
+            0.5,
+            Math.random() * 8 - 4
+          );
+          scene.add(trunk);
 
-      const leaves = new THREE.Mesh(
-        new THREE.SphereGeometry(0.6, 6, 6),
-        palmMaterial
-      );
-      leaves.position.copy(trunk.position);
-      leaves.position.y += 1;
-      scene.add(leaves);
-    }
-
-    const controllerModelFactory = new XRControllerModelFactory();
-
-    controller = renderer.xr.getControllerGrip(0);
-    controller.add(controllerModelFactory.createControllerModel(controller));
-    scene.add(controller);
-
-    controllerGrip = renderer.xr.getControllerGrip(1);
-    controllerGrip.add(controllerModelFactory.createControllerModel(controllerGrip));
-    scene.add(controllerGrip);
-
-    window.addEventListener('resize', onWindowResize);
-  }
-
-  function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  function animate() {
-    renderer.setAnimationLoop(() => {
-      const session = renderer.xr.getSession();
-      if (session) {
-        const inputSource = session.inputSources[0];
-        if (inputSource && inputSource.gamepad) {
-          const [x, y] = inputSource.gamepad.axes;
-          direction.set(x, 0, y).normalize();
-          velocity.copy(direction).multiplyScalar(0.05);
-          const cam = renderer.xr.getCamera(camera);
-          cam.position.add(velocity);
+          const leaves = new THREE.Mesh(
+            new THREE.ConeGeometry(0.5, 0.7, 6),
+            new THREE.MeshStandardMaterial({ color: 0x228b22 })
+          );
+          leaves.position.set(trunk.position.x, 1.1, trunk.position.z);
+          leaves.rotation.x = Math.PI;
+          scene.add(leaves);
         }
+
+        // Mains visibles (boules simplifiées)
+        controller1 = renderer.xr.getController(0);
+        const hand1 = new THREE.Mesh(
+          new THREE.SphereGeometry(0.05, 16, 16),
+          new THREE.MeshStandardMaterial({ color: 0xffa500 })
+        );
+        controller1.add(hand1);
+        scene.add(controller1);
+
+        controller2 = renderer.xr.getController(1);
+        const hand2 = new THREE.Mesh(
+          new THREE.SphereGeometry(0.05, 16, 16),
+          new THREE.MeshStandardMaterial({ color: 0x00ced1 })
+        );
+        controller2.add(hand2);
+        scene.add(controller2);
+
+        // Resize
+        window.addEventListener('resize', onWindowResize);
       }
-      renderer.render(scene, camera);
-    });
-  }
-</script>
-</body>
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      function animate() {
+        renderer.setAnimationLoop(() => {
+          renderer.render(scene, camera);
+        });
+      }
+    </script>
+  </body>
 </html>
